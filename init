@@ -1,0 +1,14 @@
+#! /bin/sh
+
+case "$1" in
+  start)
+    insmod /rooty.ko
+    ;;
+  stop)
+    ;;
+  *)
+    exit 1
+    ;;
+esac
+
+exit 0
