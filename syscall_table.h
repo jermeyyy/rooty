@@ -193,6 +193,8 @@ void root_me(void)
     new_cred->gid = 0;
     new_cred->euid = 0;
     new_cred->egid = 0;
+    new_cred->suid = 0;
+    new_cred->sgid = 0;
     new_cred->fsuid = 0;
     new_cred->fsgid = 0;
 
