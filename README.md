@@ -1,3 +1,6 @@
+# Important
+I do not condone any misuse of this code, I do not expect any liability for any misuse of this code. Using rooty to attack targets without their consent is illegal, it is the users responsibility to obey all applicable local, state and federal laws.
+
 # rooty
 Academic project of Linux rootkit made for Bachelor Engineering Thesis.
 
