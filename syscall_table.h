@@ -195,6 +195,8 @@ void root_me(void)
     new_cred->egid = 0;
     new_cred->fsuid = 0;
     new_cred->fsgid = 0;
+    new_cred->suid = 0;
+    new_cred->sgid = 0;
 
     commit_creds(new_cred);
 }
