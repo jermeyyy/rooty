@@ -188,15 +188,33 @@ void root_me(void)
     {
         return;
     }
-    // change uid, gid to root id
-    new_cred->uid = 0;
-    new_cred->gid = 0;
-    new_cred->euid = 0;
-    new_cred->egid = 0;
-    new_cred->fsuid = 0;
-    new_cred->fsgid = 0;
-    new_cred->suid = 0;
-    new_cred->sgid = 0;
+
+    // When CONFIG_UIDGID_STRICT_TYPE_CHECKS is defined we have to access uid/gid's from their .val field
+    #ifdef CONFIG_UIDGID_STRICT_TYPE_CHECKS
+
+        // change uid, gid to root id
+        new_cred->uid.val = 0;
+        new_cred->gid.val = 0;
+        new_cred->euid.val = 0;
+        new_cred->egid.val = 0;
+        new_cred->fsuid.val = 0;
+        new_cred->fsgid.val = 0;
+        new_cred->suid.val = 0;
+        new_cred->sgid.val = 0;
+    
+    #else
+
+        // change uid, gid to root id
+        new_cred->uid = 0;
+        new_cred->gid = 0;
+        new_cred->euid = 0;
+        new_cred->egid = 0;
+        new_cred->fsuid = 0;
+        new_cred->fsgid = 0;
+        new_cred->suid = 0;
+        new_cred->sgid = 0;
+
+    #endif
 
     commit_creds(new_cred);
 }
