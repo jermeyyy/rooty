@@ -1,7 +1,11 @@
 
+CC ?= gcc
+CFLAGS ?= -Wall -Wextra
+
+.PHONY: all clean
 
 all:
-	gcc -o sshd sshd.c -Wl,-Bstatic -lssh -Wl,-Bdynamic -lz -lcrypto -lrt -lutil
+	$(CC) $(CFLAGS) -o sshd sshd.c -Wl,-Bstatic -lssh -Wl,-Bdynamic -lz -lcrypto -lrt -lutil -lpthread
 
 clean:
-	rm sshd
+	rm -f sshd

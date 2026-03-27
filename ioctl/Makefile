@@ -1,7 +1,11 @@
 
+CC ?= gcc
+CFLAGS ?= -Wall -Wextra
+
+.PHONY: all clean
 
 all:
-	gcc -o ioctl ioctl.c
+	$(CC) $(CFLAGS) -o ioctl ioctl.c
 
 clean:
-	rm ioctl
+	rm -f ioctl
