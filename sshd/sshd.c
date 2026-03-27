@@ -20,7 +20,7 @@
 
 struct rooty_proc_args
 {
-    unsigned short pid;
+    pid_t pid;
 };
 
 struct rooty_args

