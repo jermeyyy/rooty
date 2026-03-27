@@ -47,9 +47,9 @@ int timer()
 
 int refresh(void)
 {
-    display = XOpenDisplay(":0.0");
-    root = DefaultRootWindow(display);
-    image = XGetImage(display,root, 0,0 , width,height,AllPlanes, ZPixmap);
+    image = XGetImage(display, root, 0, 0, width, height, AllPlanes, ZPixmap);
+    if (!image)
+        return 0;
     for (x = 0; x < width; x++)
         for (y = 0; y < height ; y++)
         {
@@ -63,6 +63,7 @@ int refresh(void)
             contents[(x + width * y) * 4+1] = green;
             contents[(x + width * y) * 4+2] = blue;
         }
+    XDestroyImage(image);
     return 1;
 }
 
