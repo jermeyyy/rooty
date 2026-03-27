@@ -86,6 +86,10 @@ int main(int argc,char** argv)
     printf("Process PID: %d\n",getpid());
     printf("Opening display :0... ");
     display = XOpenDisplay(":0.0");
+    if (!display) {
+        fprintf(stderr, "Error: cannot open X display\n");
+        return 1;
+    }
     printf("Display :0 opened\n");
     root = DefaultRootWindow(display);
     printf("Got rootWindow!\n");
