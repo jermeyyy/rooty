@@ -6,6 +6,7 @@
 #define DEBUG_HOOK(fmt, ...)
 
 LIST_HEAD(hooked_syms);
+static DEFINE_SPINLOCK(hooked_syms_lock);
 
 struct sym_hook
 {
@@ -116,13 +117,16 @@ void hijack_start ( void *target, void *new )
     memcpy(target, sa->n_code, HIJACK_SIZE);
     restore_wp(o_cr0);
 
+    spin_lock(&hooked_syms_lock);
     list_add(&sa->list, &hooked_syms);
+    spin_unlock(&hooked_syms_lock);
 }
 
 void hijack_pause ( void *target )
 {
     struct sym_hook *sa;
 
+    spin_lock(&hooked_syms_lock);
     list_for_each_entry ( sa, &hooked_syms, list )
     if ( target == sa->addr )
     {
@@ -130,12 +134,14 @@ void hijack_pause ( void *target )
         memcpy(target, sa->o_code, HIJACK_SIZE);
         restore_wp(o_cr0);
     }
+    spin_unlock(&hooked_syms_lock);
 }
 
 void hijack_resume ( void *target )
 {
     struct sym_hook *sa;
 
+    spin_lock(&hooked_syms_lock);
     list_for_each_entry ( sa, &hooked_syms, list )
     if ( target == sa->addr )
     {
@@ -143,12 +149,14 @@ void hijack_resume ( void *target )
         memcpy(target, sa->n_code, HIJACK_SIZE);
         restore_wp(o_cr0);
     }
+    spin_unlock(&hooked_syms_lock);
 }
 
 void hijack_stop ( void *target )
 {
     struct sym_hook *sa;
 
+    spin_lock(&hooked_syms_lock);
     list_for_each_entry ( sa, &hooked_syms, list )
     if ( target == sa->addr )
     {
@@ -158,8 +166,10 @@ void hijack_stop ( void *target )
 
         list_del(&sa->list);
         kfree(sa);
-        break;
+        spin_unlock(&hooked_syms_lock);
+        return;
     }
+    spin_unlock(&hooked_syms_lock);
 }
 
 void *memmem ( const void *haystack, size_t haystack_size, const void *needle, size_t needle_size )

