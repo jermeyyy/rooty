@@ -1,0 +1,21 @@
+# Kernel module build artifacts
+*.o
+*.ko
+*.mod
+*.mod.c
+*.cmd
+modules.order
+Module.symvers
+.tmp_versions/
+.cache.mk
+
+# Userspace binaries
+ioctl/ioctl
+sshd/sshd
+vncd/vncd
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
