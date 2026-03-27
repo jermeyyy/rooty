@@ -307,7 +307,7 @@ char *ascii[128]=
     KEY_COLN,
     KEY_SEMI,
     KEY_LESS,
-    KEY_LESS,
+    KEY_EQUL,
     KEY_MORE,
     KEY_QUES,
     KEY_AT,
