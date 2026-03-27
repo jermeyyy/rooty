@@ -1,3 +1,6 @@
+#ifndef KEYMAP_H
+#define KEYMAP_H
+
 #define KEY_NUL "<NUL>"
 #define KEY_SOH "<SOH>"
 #define KEY_STX "<STX>"
@@ -412,3 +415,5 @@ char *fncs[16] =
     KEY_UNKNOWN,
     KEY_UNKNOWN
 };
+
+#endif /* KEYMAP_H */

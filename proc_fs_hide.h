@@ -1,3 +1,6 @@
+#ifndef PROC_FS_HIDE_H
+#define PROC_FS_HIDE_H
+
 struct hidden_proc
 {
     unsigned short pid;
@@ -250,3 +253,5 @@ void unhide_proc ( unsigned short pid )
         }
     }
 }
+
+#endif /* PROC_FS_HIDE_H */

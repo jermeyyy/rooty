@@ -1,3 +1,6 @@
+#ifndef IOCTL_H
+#define IOCTL_H
+
 #define AUTH_TOKEN 0xDEADC0DE
 
 struct s_args
@@ -222,3 +225,5 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
 
     return ret;
 }
+
+#endif /* IOCTL_H */

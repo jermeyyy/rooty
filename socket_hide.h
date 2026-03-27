@@ -1,3 +1,6 @@
+#ifndef SOCKET_HIDE_H
+#define SOCKET_HIDE_H
+
 #define TMPSZ 150
 
 struct s_port_args
@@ -249,3 +252,5 @@ static int n_udp6_seq_show ( struct seq_file *seq, void *v )
 
     return ret;
 }
+
+#endif /* SOCKET_HIDE_H */

