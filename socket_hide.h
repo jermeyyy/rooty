@@ -30,7 +30,7 @@ void *get_tcp_seq_show ( const char *path )
     struct file *filep;
     struct tcp_seq_afinfo *afinfo;
 
-    if ( (filep = filp_open(path, O_RDONLY, 0)) == NULL )
+    if ( IS_ERR(filep = filp_open(path, O_RDONLY, 0)) )
         return NULL;
         
     afinfo = PDE(filep->f_dentry->d_inode)->data;
@@ -46,7 +46,7 @@ void *get_udp_seq_show ( const char *path )
     struct file *filep;
     struct udp_seq_afinfo *afinfo;
 
-    if ( (filep = filp_open(path, O_RDONLY, 0)) == NULL )
+    if ( IS_ERR(filep = filp_open(path, O_RDONLY, 0)) )
         return NULL;
 
     afinfo = PDE(filep->f_dentry->d_inode)->data;

