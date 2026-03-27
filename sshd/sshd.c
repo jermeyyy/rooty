@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <poll.h>
 #include <pty.h>
 #include <termios.h>
@@ -197,12 +198,14 @@ static int main_loop(ssh_channel chan)
     if(event == NULL)
     {
         printf("Couldn't get a event\n");
+        close(sockfd);
         return -1;
     }
     if(ssh_event_add_fd(event, fd, events, copy_fd_to_chan, chan) != SSH_OK)
     {
         printf("Couldn't add an fd to the event\n");
         ssh_event_free(event);
+        close(sockfd);
         return -1;
     }
     if(ssh_event_add_session(event, session) != SSH_OK)
@@ -210,6 +213,7 @@ static int main_loop(ssh_channel chan)
         printf("Couldn't add the session to the event\n");
         ssh_event_remove_fd(event, fd);
         ssh_event_free(event);
+        close(sockfd);
         return -1;
     }
 
@@ -221,6 +225,7 @@ static int main_loop(ssh_channel chan)
             fprintf(stderr, "Error : %s\n", ssh_get_error(session));
             ssh_event_free(event);
             ssh_disconnect(session);
+            close(sockfd);
             return -1;
         }
     }
@@ -231,6 +236,7 @@ static int main_loop(ssh_channel chan)
     ssh_event_remove_session(event, session);
 
     ssh_event_free(event);
+    close(sockfd);
     return 0;
 }
 

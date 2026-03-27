@@ -282,8 +282,10 @@ int main ( int argc, char *argv[] )
     if(io < 0)
     {
         perror("ioctl");
+        close(sockfd);
         exit(1);
     }
 
+    close(sockfd);
     return 0;
 }

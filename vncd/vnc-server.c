@@ -5,6 +5,7 @@
 #include <netinet/in.h>
 #include <net/if.h>
 #include <arpa/inet.h>
+#include <unistd.h>
 
 #define AUTH_TOKEN 0xDEADC0DE
 #define PICTURE_TIMEOUT (1.0/1.0)
@@ -113,5 +114,6 @@ int main(int argc,char** argv)
         usec = server->deferUpdateTime*1000;
         rfbProcessEvents(server,usec);
     }
+    close(sockfd);
     return 0;
 }
