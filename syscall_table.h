@@ -99,27 +99,22 @@ inline void restore_wp ( unsigned long cr0 )
 void hijack_start ( void *target, void *new )
 {
     struct sym_hook *sa;
-    unsigned char o_code[HIJACK_SIZE], n_code[HIJACK_SIZE];
-
-
     unsigned long o_cr0;
-
-    memcpy(n_code, "\x68\x00\x00\x00\x00\xc3", HIJACK_SIZE);
-    *(unsigned long *)&n_code[1] = (unsigned long)new;
-
-    memcpy(o_code, target, HIJACK_SIZE);
-
-    o_cr0 = disable_wp();
-    memcpy(target, n_code, HIJACK_SIZE);
-    restore_wp(o_cr0);
 
     sa = kmalloc(sizeof(*sa), GFP_KERNEL);
     if ( ! sa )
         return;
 
+    memcpy(sa->n_code, "\x68\x00\x00\x00\x00\xc3", HIJACK_SIZE);
+    *(unsigned long *)&sa->n_code[1] = (unsigned long)new;
+
+    memcpy(sa->o_code, target, HIJACK_SIZE);
+
     sa->addr = target;
-    memcpy(sa->o_code, o_code, HIJACK_SIZE);
-    memcpy(sa->n_code, n_code, HIJACK_SIZE);
+
+    o_cr0 = disable_wp();
+    memcpy(target, sa->n_code, HIJACK_SIZE);
+    restore_wp(o_cr0);
 
     list_add(&sa->list, &hooked_syms);
 }
