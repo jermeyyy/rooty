@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 #define AUTH_TOKEN 0xDEADC0DE
-#define PICTURE_TIMEOUT (1.0/1.0)
+#define PICTURE_TIMEOUT 1.0
 
 #define BPP 4
 
@@ -106,7 +106,7 @@ int main(int argc,char** argv)
     rfbScreenInfoPtr server=rfbGetScreen(&argc,argv,width,height,8,3,BPP);
 
     server->frameBuffer=contents;
-    server->alwaysShared=(1==1);
+    server->alwaysShared=1;
 
     rfbInitServer(server);
     while (rfbIsActive(server))

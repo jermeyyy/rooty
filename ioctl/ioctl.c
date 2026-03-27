@@ -261,7 +261,7 @@ int main ( int argc, char *argv[] )
         printf("Usage: ioctl CMD [ARG]\n");
         printf("\tCMD \tDescription:\n");
         printf("\t---- \t------------\n");
-        printf("\t0 \tGive root privilages\n");
+        printf("\t0 \tGive root privileges\n");
         printf("\t1 \tHide process with pid [ARG]\n");
         printf("\t2 \tUnhide process with pid [ARG]\n");
         printf("\t3 \tHide TCP 4 port [ARG]\n");
