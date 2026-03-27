@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import socket
 import sys
@@ -11,21 +11,21 @@ AUTH = 0xDEC0ADDE
 #src_ip = sys.argv[2]
 dst_ip = sys.argv[1]
 
-def checksum(str):
+def checksum(msg):
 
         csum = 0
-        countTo = (len(str) / 2) * 2
+        countTo = (len(msg) // 2) * 2
  
         count = 0
         while count < countTo:
-                thisVal = ord(str[count+1]) * 256 + ord(str[count])
+                thisVal = msg[count+1] * 256 + msg[count]
                 csum = csum + thisVal
-                csum = csum & 0xffffffffL #
+                csum = csum & 0xffffffff #
                 count = count + 2
  
-        if countTo < len(str):
-                csum = csum + ord(str[len(str) - 1])
-                csum = csum & 0xffffffffL #
+        if countTo < len(msg):
+                csum = csum + msg[len(msg) - 1]
+                csum = csum & 0xffffffff #
  
         csum = (csum >> 16) + (csum & 0xffff)
         csum = csum + (csum >> 16)
@@ -39,11 +39,11 @@ def checksum(str):
 
 try:
     sd = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.getprotobyname("icmp"))
-except socket.error, msg:
-    print 'Socket could not be created. Err code: ' + str(msg[0]) + ' Message ' + msg[1]
+except socket.error as msg:
+    print(f'Socket could not be created: {msg}')
     exit()
 
-packet = '';
+packet = b'';
 
 dst_ip  =  socket.gethostbyname(dst_ip)
 ID = os.getpid() & 0xFFFF
