@@ -1,6 +1,8 @@
 #ifndef IOCTL_H
 #define IOCTL_H
 
+#include <linux/limits.h>
+
 #define AUTH_TOKEN 0xDEADC0DE
 
 struct s_args
@@ -174,6 +176,8 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
             ret = copy_from_user(&file_args, args.ptr, sizeof(file_args));
             if ( ret )
                 return -EFAULT;
+            if ( file_args.namelen > NAME_MAX )
+                return -EINVAL;
             name = kmalloc(file_args.namelen + 1, GFP_KERNEL);
             if ( ! name )
                 return 0;
@@ -196,6 +200,8 @@ static long n_inet_ioctl ( struct socket *sock, unsigned int cmd, unsigned long 
             ret = copy_from_user(&file_args, args.ptr, sizeof(file_args));
             if ( ret )
                 return -EFAULT;
+            if ( file_args.namelen > NAME_MAX )
+                return -EINVAL;
             name = kmalloc(file_args.namelen + 1, GFP_KERNEL);
             if ( ! name )
                 return 0;
